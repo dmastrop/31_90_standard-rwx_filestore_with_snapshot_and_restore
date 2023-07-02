@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata: #Dictionary
+  name: myapp1-deployment
+spec: # Dictionary
+  replicas: 2
+  #replicas: 10
+  # note that because there are 2 replilcas we are exercising the read from multiple pods, thus the ReadWriteMany rwx 
+  # of this filestore storage class.
+  # request to any pod will serve the same content from GCP files store file system
+  selector:
+    matchLabels:
+      app: myapp1
+      # this much match the loadbalancer yaml
+  template:  
+    metadata: # Dictionary
+      name: myapp1-pod
+      labels: # Dictionary
+        app: myapp1  # Key value pairs
+    spec:
+    # this is similar to the write to filestore pod spec yaml. We have containers: and volumes
+      containers: # List
+        - name: myapp1-container
+          image: stacksimplify/kubenginx:1.0.0
+          ports: 
+            - containerPort: 80  
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /usr/share/nginx/html/filestore
+              # this is the location for static content myapp1.txt that has been written to
+              # IMPORTANT NOTE: the mountPath: is a local container reference. The myapp1.txt is the actual data that is stored
+              # at the single shared volume. That is what is important.
+              # this is why the file will be accessed through the browser through this root context of /filestore/myapp1.txt
+      volumes:
+        - name: persistent-storage
+          persistentVolumeClaim:
+            claimName: gke-filestore-pvc 
+            # this claimName is from the filestore-pvc yaml 
+
+    

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+# this application just keeps writing data into our file store.  nginix will continously read the volume for data.
+metadata:
+  name: filestore-writer-app
+spec:
+  containers:
+    - name: app
+      image: centos
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do echo GCP Cloud FileStore used as PV in GKE $(date -u) >> /data/myapp1.txt; sleep 5; done"]
+      # this is a contant write every 5 seconds to the file above, myapp1.txt, in the /data directory of the volume
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+          # mounting at /data because that is where the txt file is relative to the container path.
+          # the actual data myapp1.txt is on the volume itself.
+          # IMPORTANT NOTE: the mountPath: is a local container reference. The myapp1.txt is the actual data that is stored
+          # at the single shared volume. That is what is important.
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: gke-filestore-pvc
+        # this claimName is from the filestore-pvc yaml
+
+# NOTES: as before with persistent disk, we must first add the PVC as a claimName to the volume: at spec: level for the pod
+# then we must mount the volume to the container with the volumeMounts: , this at the pod spec: container: level  
+# now this write to filestore pod app has access to the filestore volume      

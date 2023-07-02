@@ -1,0 +1,17 @@
+kind: PersistentVolumeClaim
+# NOTE: this PVC will be used by both the GFS writer pod and the frontend nginix pods
+# the GFS will use it to write data to the volume and the nginx will allow us to view it through the browser
+apiVersion: v1
+metadata:
+  name: gke-filestore-pvc
+  # this name will be used in the  claimName: of the volume: in the write to filestore pod yaml
+spec:
+  accessModes:
+  - ReadWriteMany
+  # for Persistent Disk in the older demos this was ReadWriteOnce. Since were are using Google Filestore now
+  # we can do a ReadWriteMany (rwx)
+  storageClassName: standard-rwx
+  # this is the standard storage class rwx for Google Filestore.
+  resources:
+    requests:
+      storage: 1Ti
